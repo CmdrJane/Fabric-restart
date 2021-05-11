@@ -22,7 +22,7 @@ public class FabricRestart implements ModInitializer {
 	public static boolean firstPrint = false;
 	public static boolean secondPrint = false;
 	public static int timer = 0;
-	public static int timer2 = 14;
+	public static int timer2 = 15;
 	@Override
 	public void onInitialize() {
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
@@ -52,12 +52,14 @@ public class FabricRestart implements ModInitializer {
 			}
 			FIRST_MESSAGE_TIME = (DateUtils.addMinutes(new Date(RESTART_TIME), -5).getTime());
 			SECOND_MESSAGE_TIME = (DateUtils.addMinutes(new Date(RESTART_TIME), -1).getTime());
-			COUNTDOWN_TIME = (DateUtils.addSeconds(new Date(RESTART_TIME), -15).getTime());
+			COUNTDOWN_TIME = (DateUtils.addSeconds(new Date(RESTART_TIME), -16).getTime());
 		});
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			long time = System.currentTimeMillis();
 			if(time > RESTART_TIME){
-				server.getPlayerManager().saveAllPlayerData();
+				server.getPlayerManager().getPlayerList().forEach(playerEntity -> {
+					playerEntity.networkHandler.disconnect(new LiteralText("Перезапуск сервера, вернемся через несколько минут)"));
+				});
 				server.stop(false);
 			}
 			else if(!firstPrint && time > FIRST_MESSAGE_TIME){
@@ -65,7 +67,7 @@ public class FabricRestart implements ModInitializer {
 				server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.sendSystemMessage(new LiteralText("Сервер перезапуститься через одну минуту").formatted(Formatting.RED), Util.NIL_UUID));
 			}
 			else if(!secondPrint && time > SECOND_MESSAGE_TIME){
-				firstPrint = true;
+				secondPrint = true;
 				server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.sendSystemMessage(new LiteralText("Сервер перезапуститься через одну минуту").formatted(Formatting.RED), Util.NIL_UUID));
 			}
 			if(time > COUNTDOWN_TIME){
