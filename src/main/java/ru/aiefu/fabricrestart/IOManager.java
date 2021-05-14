@@ -42,6 +42,10 @@ public class IOManager {
         timeList.add(timeList.get(0) + 86400000);
         FabricRestart.enableRestartScript = configInstance.enableRestartScript;
         FabricRestart.pathToScript = configInstance.pathToScript;
+        FabricRestart.FIRST_MESSAGE = configInstance.getFiveMinMessage();
+        FabricRestart.SECOND_MESSAGE = configInstance.getOneMinMessage();
+        FabricRestart.COUNTDOWN_MESSAGE = configInstance.getCountdownMessage();
+        FabricRestart.DISCONNECT_MESSAGE = configInstance.getDisconnectMessage();
         return timeList;
     }
     public static void write(File file, String gson){
