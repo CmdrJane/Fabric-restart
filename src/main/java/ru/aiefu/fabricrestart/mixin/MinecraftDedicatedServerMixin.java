@@ -15,6 +15,7 @@ public class MinecraftDedicatedServerMixin {
             try {
                 new ProcessBuilder(FabricRestart.pathToScript).start();
             } catch (Exception e){
+                System.out.println("Unable to execute restart script!");
                 e.printStackTrace();
             }
         }
