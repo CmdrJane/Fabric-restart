@@ -1,6 +1,6 @@
 # Fabric Restart
 
-###Restart your server by providing time when it needs to restart!
+### Restart your server by providing time when it needs to restart!
 
 ## Setup
 
