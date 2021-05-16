@@ -41,7 +41,7 @@
 
 #### "countdownMessage": "Server restart in %d sec",
 
-###T his message will be displayed to players when they got kicked before restart
+### This message will be displayed to players when they got kicked before restart
 
 #### "restartMessage": "Server restarting, will be back in few minutes \u003d)"
 
