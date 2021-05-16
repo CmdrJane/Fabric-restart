@@ -44,6 +44,8 @@
 
 #### "restartMessage": "Server restarting, will be back in few minutes \u003d)"
 
+#### Server also can be restarted using /restart command however it will launch restart script regardless of config settings. 
+
 
 
 ## License
