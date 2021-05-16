@@ -6,7 +6,7 @@
 ## Setup
 ### Just drop to your mods folder
 
-##Configuration
+## Configuration
 
 ### timeArray represents the time of day when server will restart. It using local time of machine it running on
 
