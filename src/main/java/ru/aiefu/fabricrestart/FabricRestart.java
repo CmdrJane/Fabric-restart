@@ -60,9 +60,6 @@ public class FabricRestart implements DedicatedServerModInitializer {
 					.build();
 			ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(threadFactory);
 			executor.scheduleAtFixedRate(() -> {
-				if(!server.isRunning()){
-					executor.shutdown();
-				}
 				long time = System.currentTimeMillis();
 				if(time > RESTART_TIME){
 					if(enableRestartScript){
@@ -72,7 +69,6 @@ public class FabricRestart implements DedicatedServerModInitializer {
 						server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(DISCONNECT_MESSAGE)));
 						server.stop(false);
 					});
-					executor.shutdown();
 				}
 				else if(!firstPrint && time > FIRST_MESSAGE_TIME){
 					firstPrint = true;
