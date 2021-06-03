@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 public class FabricRestart implements DedicatedServerModInitializer {
 	public static boolean enableRestartScript;
-	public static boolean shouldRestart = false;
 	public static String pathToScript;
 	public static long RESTART_TIME;
 	public static long FIRST_MESSAGE_TIME;
@@ -33,6 +32,17 @@ public class FabricRestart implements DedicatedServerModInitializer {
 	private static volatile int timer2 = 15;
 	@Override
 	public void onInitializeServer() {
+		Thread test = new Thread(() -> {
+			if(enableRestartScript){
+				try {
+					new ProcessBuilder(FabricRestart.pathToScript).start();
+				} catch (Exception e){
+					System.out.println("Unable to execute restart script!");
+					e.printStackTrace();
+				}
+			}
+		});
+		Runtime.getRuntime().addShutdownHook(test);
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			IOManager.genCfg();
 			ArrayList<Long> timeList = IOManager.readCfg();
@@ -61,9 +71,6 @@ public class FabricRestart implements DedicatedServerModInitializer {
 			executor.scheduleAtFixedRate(() -> {
 				long time = System.currentTimeMillis();
 				if(time > RESTART_TIME){
-					if(enableRestartScript){
-						shouldRestart = true;
-					}
 					server.execute(() -> {
 						server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(DISCONNECT_MESSAGE)));
 						server.stop(false);

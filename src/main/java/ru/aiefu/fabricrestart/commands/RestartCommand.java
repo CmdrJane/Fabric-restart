@@ -11,7 +11,6 @@ public class RestartCommand {
                 execute(context.getSource())));
     }
     private static int execute(ServerCommandSource source){
-        FabricRestart.shouldRestart = true;
         source.getMinecraftServer().stop(false);
         return 0;
     }
