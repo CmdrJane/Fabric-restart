@@ -10,6 +10,7 @@ import net.minecraft.util.Util;
 import ru.aiefu.fabricrestart.commands.RestartCommand;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -34,8 +35,11 @@ public class FabricRestart implements DedicatedServerModInitializer {
 	public void onInitializeServer() {
 		Thread test = new Thread(() -> {
 			if(enableRestartScript){
+				String osName = System.getProperty("os.name").toLowerCase();
 				try {
-					new ProcessBuilder(FabricRestart.pathToScript).start();
+					if(osName.startsWith("windows")) {
+						new ProcessBuilder("cmd.exe", "/c", "start call " + FabricRestart.pathToScript).start();
+					} else new ProcessBuilder(FabricRestart.pathToScript).start();
 				} catch (Exception e){
 					System.out.println("Unable to execute restart script!");
 					e.printStackTrace();
