@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 public class FabricRestart implements DedicatedServerModInitializer {
 	public static boolean enableRestartScript;
+	public static boolean disableAutoRestart = false;
 	public static String pathToScript;
 	public static long RESTART_TIME;
 	public static long FIRST_MESSAGE_TIME;
@@ -26,10 +27,10 @@ public class FabricRestart implements DedicatedServerModInitializer {
 	public static long COUNTDOWN_TIME;
 	public static String COUNTDOWN_MESSAGE;
 	public static String DISCONNECT_MESSAGE;
-	private static boolean firstPrint = false;
-	private static boolean secondPrint = false;
-	private static volatile int timer = 0;
-	private static volatile int timer2 = 15;
+	public static boolean firstPrint = false;
+	public static boolean secondPrint = false;
+	public static volatile int timer = 0;
+	public static volatile int timer2 = 15;
 	@Override
 	public void onInitializeServer() {
 		Thread test = new Thread(() -> {
@@ -67,37 +68,37 @@ public class FabricRestart implements DedicatedServerModInitializer {
 			COUNTDOWN_TIME = restart - 16000;
 		});
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-			ThreadFactory threadFactory = new ThreadFactoryBuilder()
-					.setNameFormat("Restart-handler-%d")
-					.setDaemon(true)
-					.build();
-			ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(threadFactory);
-			executor.scheduleAtFixedRate(() -> {
-				long time = System.currentTimeMillis();
-				if(time > RESTART_TIME){
-					server.execute(() -> {
-						server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(DISCONNECT_MESSAGE)));
-						server.stop(false);
-					});
-				}
-				else if(!firstPrint && time > FIRST_MESSAGE_TIME){
-					firstPrint = true;
-					server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.sendSystemMessage(new LiteralText(FIRST_MESSAGE).formatted(Formatting.RED), Util.NIL_UUID));
-				}
-				else if(!secondPrint && time > SECOND_MESSAGE_TIME){
-					secondPrint = true;
-					server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.sendSystemMessage(new LiteralText(SECOND_MESSAGE).formatted(Formatting.RED), Util.NIL_UUID));
-				}
-				if(time > COUNTDOWN_TIME){
-					++timer;
-					if(timer >= 2){
-						timer = 0;
-						server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
-								.sendSystemMessage(new LiteralText(String.format(COUNTDOWN_MESSAGE, timer2)).formatted(Formatting.RED), Util.NIL_UUID));
-						--timer2;
+			if(!disableAutoRestart) {
+				ThreadFactory threadFactory = new ThreadFactoryBuilder()
+						.setNameFormat("Restart-handler-%d")
+						.setDaemon(true)
+						.build();
+				ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+				executor.scheduleAtFixedRate(() -> {
+					long time = System.currentTimeMillis();
+					if (time > RESTART_TIME) {
+						server.execute(() -> {
+							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(DISCONNECT_MESSAGE)));
+							server.stop(false);
+						});
+					} else if (!firstPrint && time > FIRST_MESSAGE_TIME) {
+						firstPrint = true;
+						server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.sendSystemMessage(new LiteralText(FIRST_MESSAGE).formatted(Formatting.RED), Util.NIL_UUID));
+					} else if (!secondPrint && time > SECOND_MESSAGE_TIME) {
+						secondPrint = true;
+						server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.sendSystemMessage(new LiteralText(SECOND_MESSAGE).formatted(Formatting.RED), Util.NIL_UUID));
 					}
-				}
-			}, 0, 500, TimeUnit.MILLISECONDS);
+					if (time > COUNTDOWN_TIME) {
+						++timer;
+						if (timer >= 2) {
+							timer = 0;
+							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
+									.sendSystemMessage(new LiteralText(String.format(COUNTDOWN_MESSAGE, timer2)).formatted(Formatting.RED), Util.NIL_UUID));
+							--timer2;
+						}
+					}
+				}, 0, 500, TimeUnit.MILLISECONDS);
+			}
 		});
 		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> RestartCommand.register(dispatcher));
 	}

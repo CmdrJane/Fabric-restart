@@ -39,7 +39,9 @@ public class IOManager {
             timeList.add(LocalDateTime.now().withHour(hour).withMinute(minutes).withSecond(0).toEpochSecond(OffsetDateTime.now().getOffset()) * 1000);
         }
         Collections.sort(timeList);
-        timeList.add(timeList.get(0) + 86400000);
+        if(!timeList.isEmpty()) {
+            timeList.add(timeList.get(0) + 86400000);
+        } else FabricRestart.disableAutoRestart = true;
         FabricRestart.enableRestartScript = configInstance.enableRestartScript;
         FabricRestart.pathToScript = configInstance.pathToScript;
         FabricRestart.FIRST_MESSAGE = configInstance.getFiveMinMessage();
