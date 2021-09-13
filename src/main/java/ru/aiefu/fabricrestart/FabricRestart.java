@@ -53,6 +53,9 @@ public class FabricRestart implements DedicatedServerModInitializer {
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			IOManager.genCfg();
 			ArrayList<Long> timeList = IOManager.readCfg();
+			if(disableAutoRestart){
+				return;
+			}
 			long restart = 0;
 			long unixTime = System.currentTimeMillis();
 			for(long l : timeList){

@@ -48,9 +48,12 @@ public class FRCommands {
     }
 
     private static int getTimeUntilRestart(ServerCommandSource source){
-        source.sendFeedback(new LiteralText("Restart time: " +
-                LocalDateTime.ofEpochSecond(FabricRestart.RESTART_TIME / 1000,0, OffsetDateTime.
-                        now().getOffset()).format(DateTimeFormatter.ofPattern("HH:mm"))), false);
+        if(!FabricRestart.disableAutoRestart)
+            source.sendFeedback(new LiteralText("Restart time: " + LocalDateTime.
+                    ofEpochSecond(FabricRestart.RESTART_TIME / 1000,0, OffsetDateTime.
+                            now().getOffset()).format(DateTimeFormatter.ofPattern("HH:mm"))
+            ), false);
+        else source.sendFeedback(new LiteralText("Auto-restart is disabled"), false);
         return 0;
     }
 }
