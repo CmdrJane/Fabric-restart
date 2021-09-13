@@ -6,7 +6,7 @@ public class ConfigInstance {
 
     ArrayList<String> timeArray = new ArrayList<>();
     boolean enableRestartScript = false;
-    String pathToScript = "./restart.bat";
+    String pathToScript = "restart.bat";
     String fiveMinMessage = "Server restart in 5 minutes";
     String oneMinMessage = "Server restart in 1 minute";
     String countdownMessage = "Server restart in %d sec";
