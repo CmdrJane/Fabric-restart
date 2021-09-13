@@ -7,8 +7,10 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
-import ru.aiefu.fabricrestart.commands.RestartCommand;
+import ru.aiefu.fabricrestart.commands.FRCommands;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -100,6 +102,6 @@ public class FabricRestart implements DedicatedServerModInitializer {
 				}, 0, 500, TimeUnit.MILLISECONDS);
 			}
 		});
-		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> RestartCommand.register(dispatcher));
+		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> FRCommands.register(dispatcher));
 	}
 }
