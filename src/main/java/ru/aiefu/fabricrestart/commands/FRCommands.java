@@ -2,15 +2,23 @@ package ru.aiefu.fabricrestart.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Util;
 import ru.aiefu.fabricrestart.FabricRestart;
+import ru.aiefu.fabricrestart.Message;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class FRCommands {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher){
@@ -19,6 +27,8 @@ public class FRCommands {
                 .then(CommandManager.argument("time", IntegerArgumentType.integer()).executes(context ->
                         delayRestart(context.getSource(),IntegerArgumentType.getInteger(context, "time"))))));
         dispatcher.register(CommandManager.literal("restart-when").executes(context -> getTimeUntilRestart(context.getSource())));
+        dispatcher.register(CommandManager.literal("memory-stat").requires(source -> source.hasPermissionLevel(4))
+                .then(CommandManager.argument("type", StringArgumentType.string()).executes(context -> memoryStat(context.getSource(), StringArgumentType.getString(context,"type")))));
     }
 
     private static int execute(ServerCommandSource source){
@@ -30,18 +40,10 @@ public class FRCommands {
         long delaytime = (long) minutes * 60 * 1000;
         FabricRestart.RESTART_TIME += delaytime;
         FabricRestart.COUNTDOWN_TIME += delaytime;
-        FabricRestart.FIRST_MESSAGE_TIME += delaytime;
-        FabricRestart.SECOND_MESSAGE_TIME += delaytime;
-        if(delaytime >= 16000){
-            FabricRestart.timer = 0;
-            FabricRestart.timer2 = 15;
+        for(Message m : FabricRestart.messageList){
+            m.setTime(m.getTime() + delaytime);
         }
-        if(delaytime >= 60000){
-            FabricRestart.secondPrint = false;
-        }
-        if(delaytime >= 300000){
-            FabricRestart.firstPrint = false;
-        }
+        FabricRestart.nextMsgTime.set(FabricRestart.nextMsgTime.get() + delaytime);
         source.getServer().getPlayerManager().getPlayerList().forEach(player ->
                 player.sendSystemMessage(new LiteralText("Restart has been delayed by " + minutes + " minutes"), Util.NIL_UUID));
         return 0;
@@ -49,11 +51,64 @@ public class FRCommands {
 
     private static int getTimeUntilRestart(ServerCommandSource source){
         if(!FabricRestart.disableAutoRestart)
-        source.sendFeedback(new LiteralText("Restart time: " + LocalDateTime.
-                ofEpochSecond(FabricRestart.RESTART_TIME / 1000,0, OffsetDateTime.
-                now().getOffset()).format(DateTimeFormatter.ofPattern("HH:mm"))
-                ), false);
+            source.sendFeedback(new LiteralText("Restart time: " + LocalDateTime.
+                    ofEpochSecond(FabricRestart.RESTART_TIME / 1000,0, OffsetDateTime.
+                            now().getOffset()).format(DateTimeFormatter.ofPattern("HH:mm"))
+            ), false);
         else source.sendFeedback(new LiteralText("Auto-restart is disabled"), false);
         return 0;
     }
+    private static int memoryStat(ServerCommandSource source, String arg){
+        MemoryMXBean mxMem = ManagementFactory.getMemoryMXBean();
+        if(arg.equals("offheap")) {
+            MemoryUsage memoryUsage = mxMem.getNonHeapMemoryUsage();
+            long used = memoryUsage.getUsed();
+            long committed = memoryUsage.getCommitted();
+            com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            source.sendFeedback(new LiteralText("Offheap Usage: "), false);
+            source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
+            source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
+            source.sendFeedback(new LiteralText("Total memory usage exclude heap: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize() - mxMem.getHeapMemoryUsage().getCommitted())), false);
+        }
+        else if (arg.equals("heap")){
+            MemoryUsage memoryUsage = mxMem.getHeapMemoryUsage();
+            long used = memoryUsage.getUsed();
+            long committed = memoryUsage.getCommitted();
+            long max = memoryUsage.getMax();
+            com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            source.sendFeedback(new LiteralText("Heap Usage: "), false);
+            source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
+            source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
+            source.sendFeedback(new LiteralText("Maximum Possible: " + formatBytesToReadable(max)), false);
+            source.sendFeedback(new LiteralText("Total JVM Process Consumption: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize())), false);
+        } else if(arg.equals("system")){
+            com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            long totalMemory = sys.getTotalMemorySize();
+            long freeMemory = sys.getFreeMemorySize();
+            source.sendFeedback(new LiteralText("Memory: " + formatBytesToReadable(totalMemory - freeMemory) + "/" + formatBytesToReadable(totalMemory)), false);
+            source.sendFeedback(new LiteralText("Free Memory: " + formatBytesToReadable(freeMemory)), false);
+        }
+        else source.sendError(new LiteralText("Wrong argument, available arguments are: heap, offheap"));
+        return 0;
+    }
+
+    private static final long K = 1024;
+    private static final long M = K * K;
+    private static final long G = M * K;
+
+    private static String formatBytesToReadable(long bytes){
+        final long[] dividers = new long[] {G, M, K, 1 };
+        final String[] units = new String[] {"GB", "MB", "KB", "B" };
+        if(bytes < 1){
+            return "Unable to parse bytes to text";
+        }
+        for(int i = 0; i < dividers.length; i++){
+            final long divider = dividers[i];
+            if(bytes >= divider){
+                return new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ENGLISH)).format((double) bytes / divider) + " " + units[i];
+            }
+        }
+        return "Unable to parse bytes to text";
+    }
+
 }
