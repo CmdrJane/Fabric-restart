@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class IOManager {
     public static void genCfg(){
@@ -42,11 +43,19 @@ public class IOManager {
         if(!timeList.isEmpty()) {
             timeList.add(timeList.get(0) + 86400000);
         } else FabricRestart.disableAutoRestart = true;
+        List<Message> msgList = configInstance.messageList;
+        if(!msgList.isEmpty()) {
+            msgList.forEach(Message::convertToEpochSeconds);
+            FabricRestart.messageList = msgList;
+        } else FabricRestart.disableMessages = true;
+
+        FabricRestart.enableMemoryWatcher = configInstance.getMemWatcher();
+        FabricRestart.killImmediately = configInstance.getKillMode();
+        FabricRestart.memThreshold = configInstance.getMemThreshold();
         FabricRestart.enableRestartScript = configInstance.enableRestartScript;
         FabricRestart.pathToScript = configInstance.pathToScript;
-        FabricRestart.FIRST_MESSAGE = configInstance.getFiveMinMessage();
-        FabricRestart.SECOND_MESSAGE = configInstance.getOneMinMessage();
         FabricRestart.COUNTDOWN_MESSAGE = configInstance.getCountdownMessage();
+        FabricRestart.MEMORY_WATCHER_MSG = configInstance.getMemWatcherKillMessage();
         FabricRestart.DISCONNECT_MESSAGE = configInstance.getDisconnectMessage();
         return timeList;
     }
