@@ -23,6 +23,9 @@ public class ConfigInstance {
     protected String tpsWatcherKillMessage = "Server tps dropped too low, restarting server in 20 seconds";
     protected double tpsThreshold = 12.0D;
 
+    protected boolean enableShutdownWatcher = false;
+    protected int shutdownWatcherDelay = 300;
+
     public ConfigInstance() {
         timeArray.add("2:00");
         timeArray.add("8:00");
@@ -62,5 +65,11 @@ public class ConfigInstance {
     }
     public String getTpsWatcherKillMessage(){
         return this.tpsWatcherKillMessage;
+    }
+    public boolean getShutdownWatcher(){
+        return this.enableShutdownWatcher;
+    }
+    public int getShutdownWatcherDelay(){
+        return this.shutdownWatcherDelay;
     }
 }

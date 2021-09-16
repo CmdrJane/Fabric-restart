@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
@@ -23,30 +22,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FabricRestart implements DedicatedServerModInitializer {
-	public static boolean enableRestartScript;
-	public static boolean disableAutoRestart = false;
+	public static volatile boolean enableRestartScript;
+	public static volatile boolean disableAutoRestart = false;
 
-	public static boolean enableMemoryWatcher;
-	public static boolean killImmediately;
-	public static long memThreshold;
+	public static volatile boolean enableMemoryWatcher;
+	public static volatile boolean killImmediately;
+	public static volatile long memThreshold;
 
-	public static boolean enableTPSWatcher;
-	public static boolean killOnLowTPS;
-	public static double tpsThreshold;
+	public static volatile boolean enableTPSWatcher;
+	public static volatile boolean killOnLowTPS;
+	public static volatile double tpsThreshold;
 
-	public static boolean disableMessages = false;
-	public static List<Message> messageList;
+	public static volatile boolean enableShutdownWatcher;
+	public static volatile AtomicLong shutdownWatcherTime;
+
+	public static volatile boolean disableMessages = false;
+	public static volatile List<Message> messageList;
 	public static volatile AtomicInteger msgIndex;
 	public static volatile AtomicLong nextMsgTime;
-	public static long RESTART_TIME;
-	public static String pathToScript;
+	public static volatile AtomicLong RESTART_TIME;
+	public static volatile String pathToScript;
 
 
-	public static long COUNTDOWN_TIME;
-	public static String COUNTDOWN_MESSAGE;
-	public static String MEMORY_WATCHER_MSG;
-	public static String TPS_WATCHER_MSG;
-	public static String DISCONNECT_MESSAGE;
+	public static volatile AtomicLong COUNTDOWN_TIME;
+	public static volatile String COUNTDOWN_MESSAGE;
+	public static volatile String MEMORY_WATCHER_MSG;
+	public static volatile String TPS_WATCHER_MSG;
+	public static volatile String DISCONNECT_MESSAGE;
 	public static volatile AtomicInteger timer = new AtomicInteger(0);
 	public static volatile AtomicInteger timer2 = new AtomicInteger(15);
 	@Override
@@ -67,6 +69,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 		Runtime.getRuntime().addShutdownHook(test);
 		ServerLifecycleEvents.SERVER_STARTING.register(this::init);
 		ServerLifecycleEvents.SERVER_STARTED.register(this::initRestartThread);
+		ServerLifecycleEvents.SERVER_STOPPING.register(this::initShutdownWatcher);
 		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> FRCommands.register(dispatcher));
 	}
 
@@ -102,8 +105,8 @@ public class FabricRestart implements DedicatedServerModInitializer {
 			}
 		}
 
-		RESTART_TIME =  restart; //LocalDateTime.now().plusSeconds(70).toEpochSecond(OffsetDateTime.now().getOffset()) * 1000;
-		COUNTDOWN_TIME = restart - 16000;
+		RESTART_TIME = new AtomicLong(restart); //LocalDateTime.now().plusSeconds(70).toEpochSecond(OffsetDateTime.now().getOffset()) * 1000;
+		COUNTDOWN_TIME = new AtomicLong(restart - 16000);
 	}
 
 	public void initRestartThread(MinecraftServer server){
@@ -116,6 +119,9 @@ public class FabricRestart implements DedicatedServerModInitializer {
 			Runnable r = new Runnable() {
 				@Override
 				public void run() {
+					if(!server.isRunning()){
+						return;
+					}
 					long time = System.currentTimeMillis();
 					if(enableMemoryWatcher){
 						this.memoryWatcher();
@@ -123,7 +129,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 					if (enableTPSWatcher) {
 						this.tpsWatcher();
 					}
-					if (time > RESTART_TIME) {
+					if (time > RESTART_TIME.get()) {
 						server.execute(() -> {
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(DISCONNECT_MESSAGE)));
 							server.stop(false);
@@ -133,10 +139,10 @@ public class FabricRestart implements DedicatedServerModInitializer {
 						msgIndex.incrementAndGet();
 						if(msgIndex.get() < messageList.size())
 						nextMsgTime.set(messageList.get(msgIndex.get()).getTime());
-						else nextMsgTime.set(RESTART_TIME);
+						else nextMsgTime.set(RESTART_TIME.get());
 						server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.sendSystemMessage(new LiteralText(message).formatted(Formatting.RED), Util.NIL_UUID));
 					}
-					if (time > COUNTDOWN_TIME) {
+					if (time > COUNTDOWN_TIME.get()) {
 						timer.incrementAndGet();
 						if (timer.get() >= 2) {
 							timer.set(0);
@@ -153,9 +159,9 @@ public class FabricRestart implements DedicatedServerModInitializer {
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
 									.sendSystemMessage(new LiteralText(MEMORY_WATCHER_MSG).formatted(Formatting.RED), Util.NIL_UUID));
 							long restart = System.currentTimeMillis() + 20000;
-							RESTART_TIME = restart;
-							COUNTDOWN_TIME = restart - 16000;
-						} else RESTART_TIME = System.currentTimeMillis();
+							RESTART_TIME.set(restart);
+							COUNTDOWN_TIME.set(restart - 16000);
+						} else RESTART_TIME.set(System.currentTimeMillis());
 					}
 				}
 				private void tpsWatcher(){
@@ -165,9 +171,9 @@ public class FabricRestart implements DedicatedServerModInitializer {
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
 									.sendSystemMessage(new LiteralText(TPS_WATCHER_MSG).formatted(Formatting.RED), Util.NIL_UUID));
 							long restart = System.currentTimeMillis() + 20000;
-							RESTART_TIME = restart;
-							COUNTDOWN_TIME = restart - 16000;
-						} else RESTART_TIME = System.currentTimeMillis();
+							RESTART_TIME.set(restart);
+							COUNTDOWN_TIME.set(restart - 16000);
+						} else RESTART_TIME.set(System.currentTimeMillis());
 					}
 				}
 			};
@@ -175,6 +181,18 @@ public class FabricRestart implements DedicatedServerModInitializer {
 		}
 	}
 
-
+	public void initShutdownWatcher(MinecraftServer server){
+		shutdownWatcherTime.set(System.currentTimeMillis() + shutdownWatcherTime.get());
+		ThreadFactory threadFactory = new ThreadFactoryBuilder()
+				.setNameFormat("Shutdown-watcher-%d")
+				.setDaemon(true)
+				.build();
+		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(threadFactory);
+		executor.scheduleAtFixedRate(() ->{
+			if(System.currentTimeMillis() > shutdownWatcherTime.get()){
+				System.exit(-1);
+			}
+		}, 0, 1000, TimeUnit.MILLISECONDS);
+	}
 
 }

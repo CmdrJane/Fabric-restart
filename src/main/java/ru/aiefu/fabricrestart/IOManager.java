@@ -14,6 +14,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class IOManager {
     public static void genCfg(){
@@ -56,6 +57,9 @@ public class IOManager {
         FabricRestart.enableTPSWatcher = configInstance.getEnableTPSWatcher();
         FabricRestart.killOnLowTPS = configInstance.getTPSKill();
         FabricRestart.tpsThreshold = configInstance.tpsThreshold();
+
+        FabricRestart.enableShutdownWatcher = configInstance.enableShutdownWatcher;
+        FabricRestart.shutdownWatcherTime = new AtomicLong(configInstance.getShutdownWatcherDelay() * 1000L);
 
         FabricRestart.enableRestartScript = configInstance.enableRestartScript;
         FabricRestart.pathToScript = configInstance.pathToScript;

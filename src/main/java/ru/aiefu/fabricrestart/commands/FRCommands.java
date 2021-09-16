@@ -40,8 +40,8 @@ public class FRCommands {
 
     private static int delayRestart(ServerCommandSource source, int minutes){
         long delaytime = (long) minutes * 60 * 1000;
-        FabricRestart.RESTART_TIME += delaytime;
-        FabricRestart.COUNTDOWN_TIME += delaytime;
+        FabricRestart.RESTART_TIME.set(FabricRestart.RESTART_TIME.get() + delaytime);
+        FabricRestart.COUNTDOWN_TIME.set(FabricRestart.COUNTDOWN_TIME.get() + delaytime);
         for(Message m : FabricRestart.messageList){
             m.setTime(m.getTime() + delaytime);
         }
@@ -54,7 +54,7 @@ public class FRCommands {
     private static int getTimeUntilRestart(ServerCommandSource source){
         if(!FabricRestart.disableAutoRestart)
             source.sendFeedback(new LiteralText("Restart time: " + LocalDateTime.
-                    ofEpochSecond(FabricRestart.RESTART_TIME / 1000,0, OffsetDateTime.
+                    ofEpochSecond(FabricRestart.RESTART_TIME.get() / 1000,0, OffsetDateTime.
                             now().getOffset()).format(DateTimeFormatter.ofPattern("HH:mm"))
             ), false);
         else source.sendFeedback(new LiteralText("Auto-restart is disabled"), false);
