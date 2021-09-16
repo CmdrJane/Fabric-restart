@@ -8,6 +8,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Util;
 import ru.aiefu.fabricrestart.FabricRestart;
+import ru.aiefu.fabricrestart.ITPS;
 import ru.aiefu.fabricrestart.Message;
 
 import java.lang.management.ManagementFactory;
@@ -29,6 +30,7 @@ public class FRCommands {
         dispatcher.register(CommandManager.literal("restart-when").executes(context -> getTimeUntilRestart(context.getSource())));
         dispatcher.register(CommandManager.literal("memory-stat").requires(source -> source.hasPermissionLevel(4))
                 .then(CommandManager.argument("type", StringArgumentType.string()).executes(context -> memoryStat(context.getSource(), StringArgumentType.getString(context,"type")))));
+        dispatcher.register(CommandManager.literal("getTPS").executes(context -> getTPS(context.getSource())));
     }
 
     private static int execute(ServerCommandSource source){
@@ -60,35 +62,44 @@ public class FRCommands {
     }
     private static int memoryStat(ServerCommandSource source, String arg){
         MemoryMXBean mxMem = ManagementFactory.getMemoryMXBean();
-        if(arg.equals("offheap")) {
-            MemoryUsage memoryUsage = mxMem.getNonHeapMemoryUsage();
-            long used = memoryUsage.getUsed();
-            long committed = memoryUsage.getCommitted();
-            com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-            source.sendFeedback(new LiteralText("Offheap Usage: "), false);
-            source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
-            source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
-            source.sendFeedback(new LiteralText("Total memory usage exclude heap: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize() - mxMem.getHeapMemoryUsage().getCommitted())), false);
+        switch (arg) {
+            case "offheap" -> {
+                MemoryUsage memoryUsage = mxMem.getNonHeapMemoryUsage();
+                long used = memoryUsage.getUsed();
+                long committed = memoryUsage.getCommitted();
+                com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                source.sendFeedback(new LiteralText("Offheap Usage: "), false);
+                source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
+                source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
+                source.sendFeedback(new LiteralText("Total memory usage exclude heap: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize() - mxMem.getHeapMemoryUsage().getCommitted())), false);
+            }
+            case "heap" -> {
+                MemoryUsage memoryUsage = mxMem.getHeapMemoryUsage();
+                long used = memoryUsage.getUsed();
+                long committed = memoryUsage.getCommitted();
+                long max = memoryUsage.getMax();
+                com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                source.sendFeedback(new LiteralText("Heap Usage: "), false);
+                source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
+                source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
+                source.sendFeedback(new LiteralText("Maximum Possible: " + formatBytesToReadable(max)), false);
+                source.sendFeedback(new LiteralText("Total JVM Process Consumption: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize())), false);
+            }
+            case "system" -> {
+                com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                long totalMemory = sys.getTotalMemorySize();
+                long freeMemory = sys.getFreeMemorySize();
+                source.sendFeedback(new LiteralText("Memory: " + formatBytesToReadable(totalMemory - freeMemory) + "/" + formatBytesToReadable(totalMemory)), false);
+                source.sendFeedback(new LiteralText("Free Memory: " + formatBytesToReadable(freeMemory)), false);
+            }
+            default -> source.sendError(new LiteralText("Wrong argument, available arguments are: heap, offheap, system"));
         }
-        else if (arg.equals("heap")){
-            MemoryUsage memoryUsage = mxMem.getHeapMemoryUsage();
-            long used = memoryUsage.getUsed();
-            long committed = memoryUsage.getCommitted();
-            long max = memoryUsage.getMax();
-            com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-            source.sendFeedback(new LiteralText("Heap Usage: "), false);
-            source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
-            source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
-            source.sendFeedback(new LiteralText("Maximum Possible: " + formatBytesToReadable(max)), false);
-            source.sendFeedback(new LiteralText("Total JVM Process Consumption: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize())), false);
-        } else if(arg.equals("system")){
-            com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-            long totalMemory = sys.getTotalMemorySize();
-            long freeMemory = sys.getFreeMemorySize();
-            source.sendFeedback(new LiteralText("Memory: " + formatBytesToReadable(totalMemory - freeMemory) + "/" + formatBytesToReadable(totalMemory)), false);
-            source.sendFeedback(new LiteralText("Free Memory: " + formatBytesToReadable(freeMemory)), false);
-        }
-        else source.sendError(new LiteralText("Wrong argument, available arguments are: heap, offheap"));
+        return 0;
+    }
+
+    private static int getTPS(ServerCommandSource source){
+        String formatted = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ENGLISH)).format(((ITPS)source.getServer()).getAverageTPS());
+        source.sendFeedback(new LiteralText("TPS: " + formatted), false);
         return 0;
     }
 

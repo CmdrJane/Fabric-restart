@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
@@ -24,9 +25,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FabricRestart implements DedicatedServerModInitializer {
 	public static boolean enableRestartScript;
 	public static boolean disableAutoRestart = false;
+
 	public static boolean enableMemoryWatcher;
 	public static boolean killImmediately;
 	public static long memThreshold;
+
+	public static boolean enableTPSWatcher;
+	public static boolean killOnLowTPS;
+	public static double tpsThreshold;
+
 	public static boolean disableMessages = false;
 	public static List<Message> messageList;
 	public static volatile AtomicInteger msgIndex;
@@ -38,6 +45,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 	public static long COUNTDOWN_TIME;
 	public static String COUNTDOWN_MESSAGE;
 	public static String MEMORY_WATCHER_MSG;
+	public static String TPS_WATCHER_MSG;
 	public static String DISCONNECT_MESSAGE;
 	public static volatile AtomicInteger timer = new AtomicInteger(0);
 	public static volatile AtomicInteger timer2 = new AtomicInteger(15);
@@ -110,6 +118,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 				public void run() {
 					long time = System.currentTimeMillis();
 					this.memoryWatcher();
+					this.tpsWatcher();
 					if (time > RESTART_TIME) {
 						server.execute(() -> {
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(DISCONNECT_MESSAGE)));
@@ -139,6 +148,18 @@ public class FabricRestart implements DedicatedServerModInitializer {
 						if(!killImmediately) {
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
 									.sendSystemMessage(new LiteralText(MEMORY_WATCHER_MSG).formatted(Formatting.RED), Util.NIL_UUID));
+							long restart = System.currentTimeMillis() + 20000;
+							RESTART_TIME = restart;
+							COUNTDOWN_TIME = restart - 16000;
+						} else RESTART_TIME = System.currentTimeMillis();
+					}
+				}
+				private void tpsWatcher(){
+					double tps = ((ITPS) server).getAverageTPS();
+					if(tps < tpsThreshold){
+						if(!killOnLowTPS) {
+							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
+									.sendSystemMessage(new LiteralText(TPS_WATCHER_MSG).formatted(Formatting.RED), Util.NIL_UUID));
 							long restart = System.currentTimeMillis() + 20000;
 							RESTART_TIME = restart;
 							COUNTDOWN_TIME = restart - 16000;

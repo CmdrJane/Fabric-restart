@@ -52,10 +52,16 @@ public class IOManager {
         FabricRestart.enableMemoryWatcher = configInstance.getMemWatcher();
         FabricRestart.killImmediately = configInstance.getKillMode();
         FabricRestart.memThreshold = configInstance.getMemThreshold();
+
+        FabricRestart.enableTPSWatcher = configInstance.getEnableTPSWatcher();
+        FabricRestart.killOnLowTPS = configInstance.getTPSKill();
+        FabricRestart.tpsThreshold = configInstance.tpsThreshold();
+
         FabricRestart.enableRestartScript = configInstance.enableRestartScript;
         FabricRestart.pathToScript = configInstance.pathToScript;
         FabricRestart.COUNTDOWN_MESSAGE = configInstance.getCountdownMessage();
         FabricRestart.MEMORY_WATCHER_MSG = configInstance.getMemWatcherKillMessage();
+        FabricRestart.TPS_WATCHER_MSG = configInstance.getTpsWatcherKillMessage();
         FabricRestart.DISCONNECT_MESSAGE = configInstance.getDisconnectMessage();
         return timeList;
     }

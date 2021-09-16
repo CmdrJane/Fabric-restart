@@ -18,6 +18,11 @@ public class ConfigInstance {
     protected String memWatcherKillMessage = "JVM Consuming too much physical memory, restarting server in 20 seconds";
     protected int memThreshold = 1024;
 
+    protected boolean enableTPSWatcher = false;
+    protected boolean tpsKillImmediately = false;
+    protected String tpsWatcherKillMessage = "Server tps dropped too low, restarting server in 20 seconds";
+    protected double tpsThreshold = 12.0D;
+
     public ConfigInstance() {
         timeArray.add("2:00");
         timeArray.add("8:00");
@@ -44,5 +49,18 @@ public class ConfigInstance {
     }
     public boolean getKillMode(){
         return this.killImmediately;
+    }
+
+    public boolean getEnableTPSWatcher(){
+        return this.enableTPSWatcher;
+    }
+    public boolean getTPSKill(){
+        return this.tpsKillImmediately;
+    }
+    public double tpsThreshold(){
+        return this.tpsThreshold;
+    }
+    public String getTpsWatcherKillMessage(){
+        return this.tpsWatcherKillMessage;
     }
 }
