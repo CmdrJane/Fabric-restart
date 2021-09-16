@@ -117,8 +117,12 @@ public class FabricRestart implements DedicatedServerModInitializer {
 				@Override
 				public void run() {
 					long time = System.currentTimeMillis();
-					this.memoryWatcher();
-					this.tpsWatcher();
+					if(enableMemoryWatcher){
+						this.memoryWatcher();
+					}
+					if (enableTPSWatcher) {
+						this.tpsWatcher();
+					}
 					if (time > RESTART_TIME) {
 						server.execute(() -> {
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(DISCONNECT_MESSAGE)));
