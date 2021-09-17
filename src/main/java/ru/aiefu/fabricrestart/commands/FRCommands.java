@@ -7,6 +7,7 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Util;
+import ru.aiefu.fabricrestart.ConfigInstance;
 import ru.aiefu.fabricrestart.FabricRestart;
 import ru.aiefu.fabricrestart.ITPS;
 import ru.aiefu.fabricrestart.Message;
@@ -40,21 +41,16 @@ public class FRCommands {
 
     private static int delayRestart(ServerCommandSource source, int minutes){
         long delaytime = (long) minutes * 60 * 1000;
-        FabricRestart.RESTART_TIME.set(FabricRestart.RESTART_TIME.get() + delaytime);
-        FabricRestart.COUNTDOWN_TIME.set(FabricRestart.COUNTDOWN_TIME.get() + delaytime);
-        for(Message m : FabricRestart.messageList){
-            m.setTime(m.getTime() + delaytime);
-        }
-        FabricRestart.nextMsgTime.set(FabricRestart.nextMsgTime.get() + delaytime);
+        FabricRestart.CONFIG.delayRestart(delaytime);
         source.getServer().getPlayerManager().getPlayerList().forEach(player ->
                 player.sendSystemMessage(new LiteralText("Restart has been delayed by " + minutes + " minutes"), Util.NIL_UUID));
         return 0;
     }
 
     private static int getTimeUntilRestart(ServerCommandSource source){
-        if(!FabricRestart.disableAutoRestart)
+        if(!FabricRestart.CONFIG.disableAutoRestart)
             source.sendFeedback(new LiteralText("Restart time: " + LocalDateTime.
-                    ofEpochSecond(FabricRestart.RESTART_TIME.get() / 1000,0, OffsetDateTime.
+                    ofEpochSecond(FabricRestart.CONFIG.RESTART_TIME.get() / 1000,0, OffsetDateTime.
                             now().getOffset()).format(DateTimeFormatter.ofPattern("HH:mm"))
             ), false);
         else source.sendFeedback(new LiteralText("Auto-restart is disabled"), false);

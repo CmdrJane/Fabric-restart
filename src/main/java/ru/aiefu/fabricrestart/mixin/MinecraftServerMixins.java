@@ -5,8 +5,6 @@ import net.minecraft.util.Util;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import ru.aiefu.fabricrestart.ITPS;
@@ -36,7 +34,7 @@ public class MinecraftServerMixins implements ITPS {
 
     private void calculateTPSFR(long l, long n){
         samples.add(n - l);
-        if(n >= timeRefMs || samples.size() >= 20){
+        if(n >= timeRefMs || samples.size() > 19){
             timeRefMs = n + 1_000_000_000;
             tpsSamples.add(Math.min(20.0D / (samples.stream().mapToLong(Long::longValue).sum() / 1000_000_000.0D), 20.0D));
             samples.clear();

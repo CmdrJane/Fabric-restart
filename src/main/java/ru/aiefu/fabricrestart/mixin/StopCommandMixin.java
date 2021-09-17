@@ -13,6 +13,6 @@ import ru.aiefu.fabricrestart.FabricRestart;
 public class StopCommandMixin {
     @Inject(method = "method_13676(Lcom/mojang/brigadier/context/CommandContext;)I", at = @At("HEAD"))
     private static void preventRestartScript(CommandContext<ServerCommandSource> context, CallbackInfoReturnable<Integer> cir){
-        FabricRestart.enableRestartScript = false;
+        FabricRestart.CONFIG.enableRestartScript = false;
     }
 }
