@@ -25,7 +25,8 @@ public class ConfigInstance {
     public long memThreshold = 1024;
 
     public boolean enableTPSWatcher = false;
-    public boolean killOnLowTPS = false;
+    public boolean instaKillOnLowTPS = false;
+    public int tpsWatcherDelay = 60;
     public double tpsThreshold = 12.0D;
 
     public boolean enableShutdownWatcher = false;
@@ -68,6 +69,7 @@ public class ConfigInstance {
     public void setup() throws Exception {
         this.memThreshold = this.memThreshold * 1024 * 1024;
         this.shutdownWatcherTime = this.shutdownWatcherTime * 1000;
+        this.tpsWatcherDelay = this.tpsWatcherDelay * 2;
         ArrayList<Long> timeList = new ArrayList<>();
         for(String s : this.timeArray){
             int index = s.indexOf(':');

@@ -77,7 +77,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 					}
 					if (time > CONFIG.RESTART_TIME.get()) {
 						server.execute(() -> {
-							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(CONFIG.DISCONNECT_MESSAGE)));
+							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.networkHandler.disconnect(new LiteralText(CONFIG.getDisconnectMessage())));
 							server.stop(false);
 						});
 					} else if (!CONFIG.disableMessages && time > CONFIG.nextMsgTime.get()) {
@@ -85,7 +85,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 						CONFIG.msgIndex.incrementAndGet();
 						if(CONFIG.msgIndex.get() < CONFIG.messageList.size())
 							CONFIG.nextMsgTime.set(CONFIG.messageList.get(CONFIG.msgIndex.get()).getTime());
-						else CONFIG.nextMsgTime.set(CONFIG.RESTART_TIME.get());
+						else CONFIG.nextMsgTime.set(CONFIG.RESTART_TIME.get() + 2000);
 						server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity.sendSystemMessage(new LiteralText(message).formatted(Formatting.RED), Util.NIL_UUID));
 					}
 					if (time > CONFIG.COUNTDOWN_TIME.get()) {
@@ -93,7 +93,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 						if (CONFIG.timer.get() >= 2) {
 							CONFIG.timer.set(0);
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
-									.sendSystemMessage(new LiteralText(String.format(CONFIG.COUNTDOWN_MESSAGE, CONFIG.timer2.get())).formatted(Formatting.RED), Util.NIL_UUID));
+									.sendSystemMessage(new LiteralText(String.format(CONFIG.getCountdownMessage(), CONFIG.timer2.get())).formatted(Formatting.RED), Util.NIL_UUID));
 							CONFIG.timer2.decrementAndGet();
 						}
 					}
@@ -103,7 +103,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 					if(sys.getFreeMemorySize() < CONFIG.memThreshold && !CONFIG.memWatcherTriggered){
 						if(!CONFIG.killImmediately) {
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
-									.sendSystemMessage(new LiteralText(CONFIG.MEMORY_WATCHER_MSG).formatted(Formatting.RED), Util.NIL_UUID));
+									.sendSystemMessage(new LiteralText(CONFIG.getMemWatcherKillMessage()).formatted(Formatting.RED), Util.NIL_UUID));
 							long restart = System.currentTimeMillis() + 20000;
 							CONFIG.RESTART_TIME.set(restart);
 							CONFIG.COUNTDOWN_TIME.set(restart - 16000);
@@ -116,10 +116,10 @@ public class FabricRestart implements DedicatedServerModInitializer {
 					if(tps < CONFIG.tpsThreshold){
 						++tpsWatcherTimer;
 					} else tpsWatcherTimer = 0;
-					if(tpsWatcherTimer > 119 && !CONFIG.tpsWatcherTriggered){
-						if(!CONFIG.killOnLowTPS) {
+					if(tpsWatcherTimer > CONFIG.tpsWatcherDelay && !CONFIG.tpsWatcherTriggered){
+						if(!CONFIG.instaKillOnLowTPS) {
 							server.getPlayerManager().getPlayerList().forEach(playerEntity -> playerEntity
-									.sendSystemMessage(new LiteralText(CONFIG.TPS_WATCHER_MSG).formatted(Formatting.RED), Util.NIL_UUID));
+									.sendSystemMessage(new LiteralText(CONFIG.getTpsWatcherKillMessage()).formatted(Formatting.RED), Util.NIL_UUID));
 							long restart = System.currentTimeMillis() + 20000;
 							CONFIG.RESTART_TIME.set(restart);
 							CONFIG.COUNTDOWN_TIME.set(restart - 16000);

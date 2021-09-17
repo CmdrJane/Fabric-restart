@@ -7,10 +7,8 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Util;
-import ru.aiefu.fabricrestart.ConfigInstance;
 import ru.aiefu.fabricrestart.FabricRestart;
 import ru.aiefu.fabricrestart.ITPS;
-import ru.aiefu.fabricrestart.Message;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -40,6 +38,10 @@ public class FRCommands {
     }
 
     private static int delayRestart(ServerCommandSource source, int minutes){
+        if(FabricRestart.CONFIG.memWatcherTriggered || FabricRestart.CONFIG.tpsWatcherTriggered){
+            source.sendError(new LiteralText("Impossible to delay restart if tps/memory watcher triggered"));
+            return 0;
+        }
         long delaytime = (long) minutes * 60 * 1000;
         FabricRestart.CONFIG.delayRestart(delaytime);
         source.getServer().getPlayerManager().getPlayerList().forEach(player ->
