@@ -90,7 +90,6 @@ public class ConfigInstance {
                     break;
                 }
             }
-            restart = LocalDateTime.now().plusSeconds(80).toEpochSecond(OffsetDateTime.now().getOffset()) * 1000;
             if(restart <= 0){
                 throw new Exception("Restart time cannot be lower or equals 0");
             }
