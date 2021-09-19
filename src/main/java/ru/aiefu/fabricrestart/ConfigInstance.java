@@ -32,6 +32,10 @@ public class ConfigInstance {
     public boolean enableShutdownWatcher = false;
     public long shutdownWatcherTime = 300L;
 
+    public boolean restartWhenNoPlayersAreOnline = false;
+    public boolean inverseMode = false;
+    public int restartDelay = 60;
+
     public transient boolean disableMessages = false;
     public transient AtomicInteger msgIndex;
     public transient AtomicLong nextMsgTime;
@@ -64,6 +68,10 @@ public class ConfigInstance {
     }
     public String getTpsWatcherKillMessage(){
         return Objects.requireNonNullElse(this.TPS_WATCHER_MSG, "Server tps dropped too low, restarting server in 20 seconds");
+    }
+
+    public long getTimeRef(){
+        return this.restartDelay * 60L * 1000L;
     }
 
     public void setup() throws Exception {

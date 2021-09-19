@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;
@@ -38,7 +39,11 @@ public class FabricRestart implements DedicatedServerModInitializer {
 		Runtime.getRuntime().addShutdownHook(test);
 		ServerLifecycleEvents.SERVER_STARTING.register(this::init);
 		ServerLifecycleEvents.SERVER_STARTED.register(this::initRestartThread);
+		ServerLifecycleEvents.SERVER_STARTED.register(server -> this.timeRef = System.currentTimeMillis() + CONFIG.getTimeRef());
 		ServerLifecycleEvents.SERVER_STOPPING.register(this::initShutdownWatcher);
+		if(CONFIG.restartWhenNoPlayersAreOnline){
+			ServerTickEvents.END_SERVER_TICK.register(this::playersChecker);
+		}
 		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> FRCommands.register(dispatcher));
 	}
 
@@ -149,4 +154,24 @@ public class FabricRestart implements DedicatedServerModInitializer {
 		}, 0, 1000, TimeUnit.MILLISECONDS);
 	}
 
+	private boolean timeCheckTriggered = false;
+	private long timeRef;
+	private long timeRef2;
+
+	public void playersChecker(MinecraftServer server){
+		if(server.getTicks() % 6000 == 0){
+			boolean bl = server.getPlayerManager().getPlayerList().size() < 1;
+			long currentTime = System.currentTimeMillis();
+			if(CONFIG.inverseMode){
+				if(!this.timeCheckTriggered && bl){
+					this.timeRef2 = currentTime + CONFIG.getTimeRef();
+					this.timeCheckTriggered = true;
+				}
+				if(!bl) this.timeCheckTriggered = false;
+
+				if(currentTime > this.timeRef2 && bl) server.stop(false);
+
+			} else if (currentTime > this.timeRef && bl) server.stop(false);
+		}
+	}
 }
