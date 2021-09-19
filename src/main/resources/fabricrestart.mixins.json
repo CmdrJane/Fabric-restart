@@ -4,6 +4,7 @@
   "package": "ru.aiefu.fabricrestart.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MinecraftServerMixins"
   ],
   "client": [
   ],

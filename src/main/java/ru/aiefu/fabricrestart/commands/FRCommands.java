@@ -8,7 +8,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Util;
 import ru.aiefu.fabricrestart.FabricRestart;
-import ru.aiefu.fabricrestart.Message;
+import ru.aiefu.fabricrestart.ITPS;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -29,6 +29,7 @@ public class FRCommands {
         dispatcher.register(CommandManager.literal("restart-when").executes(context -> getTimeUntilRestart(context.getSource())));
         dispatcher.register(CommandManager.literal("memory-stat").requires(source -> source.hasPermissionLevel(4))
                 .then(CommandManager.argument("type", StringArgumentType.string()).executes(context -> memoryStat(context.getSource(), StringArgumentType.getString(context,"type")))));
+        dispatcher.register(CommandManager.literal("getTPS").executes(context -> getTPS(context.getSource())));
     }
 
     private static int execute(ServerCommandSource source){
@@ -37,22 +38,21 @@ public class FRCommands {
     }
 
     private static int delayRestart(ServerCommandSource source, int minutes){
-        long delaytime = (long) minutes * 60 * 1000;
-        FabricRestart.RESTART_TIME += delaytime;
-        FabricRestart.COUNTDOWN_TIME += delaytime;
-        for(Message m : FabricRestart.messageList){
-            m.setTime(m.getTime() + delaytime);
+        if(FabricRestart.CONFIG.memWatcherTriggered || FabricRestart.CONFIG.tpsWatcherTriggered){
+            source.sendError(new LiteralText("Impossible to delay restart if tps/memory watcher triggered"));
+            return 0;
         }
-        FabricRestart.nextMsgTime.set(FabricRestart.nextMsgTime.get() + delaytime);
+        long delaytime = (long) minutes * 60 * 1000;
+        FabricRestart.CONFIG.delayRestart(delaytime);
         source.getMinecraftServer().getPlayerManager().getPlayerList().forEach(player ->
                 player.sendSystemMessage(new LiteralText("Restart has been delayed by " + minutes + " minutes"), Util.NIL_UUID));
         return 0;
     }
 
     private static int getTimeUntilRestart(ServerCommandSource source){
-        if(!FabricRestart.disableAutoRestart)
+        if(!FabricRestart.CONFIG.disableAutoRestart)
             source.sendFeedback(new LiteralText("Restart time: " + LocalDateTime.
-                    ofEpochSecond(FabricRestart.RESTART_TIME / 1000,0, OffsetDateTime.
+                    ofEpochSecond(FabricRestart.CONFIG.RESTART_TIME.get() / 1000,0, OffsetDateTime.
                             now().getOffset()).format(DateTimeFormatter.ofPattern("HH:mm"))
             ), false);
         else source.sendFeedback(new LiteralText("Auto-restart is disabled"), false);
@@ -60,27 +60,50 @@ public class FRCommands {
     }
     private static int memoryStat(ServerCommandSource source, String arg){
         MemoryMXBean mxMem = ManagementFactory.getMemoryMXBean();
-        if(arg.equals("offheap")) {
-            MemoryUsage memoryUsage = mxMem.getNonHeapMemoryUsage();
-            long used = memoryUsage.getUsed();
-            long committed = memoryUsage.getCommitted();
-
-            source.sendFeedback(new LiteralText("Offheap Usage: "), false);
-            source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
-            source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
+        switch (arg) {
+            case "offheap": {
+                MemoryUsage memoryUsage = mxMem.getNonHeapMemoryUsage();
+                long used = memoryUsage.getUsed();
+                long committed = memoryUsage.getCommitted();
+                com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                source.sendFeedback(new LiteralText("Offheap Usage: "), false);
+                source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
+                source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
+                source.sendFeedback(new LiteralText("Total memory usage exclude heap: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize() - mxMem.getHeapMemoryUsage().getCommitted())), false);
+                break;
+            }
+            case "heap": {
+                MemoryUsage memoryUsage = mxMem.getHeapMemoryUsage();
+                long used = memoryUsage.getUsed();
+                long committed = memoryUsage.getCommitted();
+                long max = memoryUsage.getMax();
+                com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                source.sendFeedback(new LiteralText("Heap Usage: "), false);
+                source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
+                source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
+                source.sendFeedback(new LiteralText("Maximum Possible: " + formatBytesToReadable(max)), false);
+                source.sendFeedback(new LiteralText("Total JVM Process Consumption: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize())), false);
+                break;
+            }
+            case "system": {
+                com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                long totalMemory = sys.getTotalPhysicalMemorySize();
+                long freeMemory = sys.getFreePhysicalMemorySize();
+                source.sendFeedback(new LiteralText("Memory: " + formatBytesToReadable(totalMemory - freeMemory) + "/" + formatBytesToReadable(totalMemory)), false);
+                source.sendFeedback(new LiteralText("Free Memory: " + formatBytesToReadable(freeMemory)), false);
+                break;
+            }
+            default:
+                source.sendError(new LiteralText("Wrong argument, available arguments are: heap, offheap, system"));
+                break;
         }
-        else if (arg.equals("heap")){
-            MemoryUsage memoryUsage = mxMem.getHeapMemoryUsage();
-            long used = memoryUsage.getUsed();
-            long committed = memoryUsage.getCommitted();
-            long max = memoryUsage.getMax();
-            com.sun.management.OperatingSystemMXBean sys = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-            source.sendFeedback(new LiteralText("Heap Usage: "), false);
-            source.sendFeedback(new LiteralText("Used: " + formatBytesToReadable(used)), false);
-            source.sendFeedback(new LiteralText("Reserved by JVM: " + formatBytesToReadable(committed)), false);
-            source.sendFeedback(new LiteralText("Maximum Possible: " + formatBytesToReadable(max)), false);
-            source.sendFeedback(new LiteralText("Total JVM Process Consumption: " + formatBytesToReadable(sys.getCommittedVirtualMemorySize())), false);
-        } else source.sendError(new LiteralText("Wrong argument, available arguments are: heap, offheap"));
+
+        return 0;
+    }
+
+    private static int getTPS(ServerCommandSource source){
+        String formatted = new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ENGLISH)).format(((ITPS)source.getMinecraftServer()).getAverageTPS());
+        source.sendFeedback(new LiteralText("TPS: " + formatted), false);
         return 0;
     }
 
