@@ -41,9 +41,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 		ServerLifecycleEvents.SERVER_STARTED.register(this::initRestartThread);
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> this.timeRef = System.currentTimeMillis() + CONFIG.getTimeRef());
 		ServerLifecycleEvents.SERVER_STOPPING.register(this::initShutdownWatcher);
-		if(CONFIG.restartWhenNoPlayersAreOnline){
-			ServerTickEvents.END_SERVER_TICK.register(this::playersChecker);
-		}
+		ServerTickEvents.END_SERVER_TICK.register(this::playersChecker);
 		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> FRCommands.register(dispatcher));
 	}
 
@@ -159,7 +157,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 	private long timeRef2;
 
 	public void playersChecker(MinecraftServer server){
-		if(server.getTicks() % 6000 == 0){
+		if(server.getTicks() % 6000 == 0 && CONFIG.restartWhenNoPlayersAreOnline){
 			boolean bl = server.getPlayerManager().getPlayerList().size() < 1;
 			long currentTime = System.currentTimeMillis();
 			if(CONFIG.inverseMode){
