@@ -52,6 +52,8 @@
 ### "inverseMode": - if false then server will restart if it was running for time specified in restartDelay field and there is no players online. if true then server will restart after time specified in restartDelay field will pass since last player leave from server. Default false
 ### "restartDelay": 60 - delay in minutes
 
+#### Server also can be restarted using /restart command however it will launch restart script regardless of config settings.
+
 
 ## License
 
