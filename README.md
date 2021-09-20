@@ -8,48 +8,49 @@
 
 ## Configuration
 
-### timeArray represents the time of day when server will restart. It using local time of machine it running on
+ ### "timeArray":[ "2:00", "8:00", "14:00", "20:00" ] - table of timestamps when server should restart. You can add/remove elements if need. Exmaples:
+ 
+### "timeArray":[ "8:00", "16:00", "0:00" ] or "timeArray":[ "12:00", "0:00" ]
 
-### Default:
-
-#### "timeArray":[
-
-#### "2:00",
-
-#### "8:00",
-
-#### "14:00",
-
-#### "20:00" ]
-
-### enableRestartScript specifies whenever restart script should be enabled. if you're running your server as linux service and have configured your service to always restart you want this to be false 
+ 
+### "enableRestartScript": - whenever execution of restart script should be enabled. Can be true/false, false by default
+### "pathToScript": "restart.bat" - path to your server restart script from root server directory. It was recommended to put restart script in root directory of your server. For linux: "pathToScript": "./restart.sh"
 
 
-#### "enableRestartScript": false
-### pathToScript is a relative path to your restart script. By default your restart.bat script file should be located at same level as the server.properties file. 
+### "messageList": - list of messages that will be send to chat when this much time left until restart. Example
 
-### .sh scripts should work too
+### { "time": 60, "message": "Server restart in 1 minute" }
 
-#### "pathToScript": "./restart.bat",
 
-### Message to be displayed when 5 minutes until restart left
+### "COUNTDOWN_MESSAGE": - Message that will be displayed on 15 second countdown before restart
 
-#### "fiveMinMessage": "Server restart in 5 minutes",
+### "MEMORY_WATCHER_MSG": - Message that will be displayed if memory watcher enabled and triggered if "killImmediately" is not set to true
 
-### Message to be displayed when 1 minute until restart left
+### "TPS_WATCHER_MSG": - Message that will be displayed if tps falls too low and tps wacther is enabled and triggered if "instaKillOnLowTPS" is not set to true
 
-#### "oneMinMessage": "Server restart in 1 minute",
+### "DISCONNECT_MESSAGE": - Message that will be displayed to players when they got kicked right before restart
 
-### Restart message displayed in chat on 15 seconds countdown before restart
 
-#### "countdownMessage": "Server restart in %d sec",
+### "enableMemoryWatcher": - if memory watcher should be enabled. Default false
 
-### This message will be displayed to players when they got kicked before restart
+### "killImmediately": - if watcher should instantly stop(restart if restart script is enabled) the server, default false
 
-#### "restartMessage": "Server restarting, will be back in few minutes \u003d)"
+### "memThreshold": - if total physical free memory will fall bellow this value watcher will be triggered. Default 1024 (in megabytes)
 
-#### Server also can be restarted using /restart command however it will launch restart script regardless of config settings. 
 
+### "enableTPSWatcher": - if tps watcher should be enabled. Default false
+### "instaKillOnLowTPS": - if watcher should instantly stop(restart if restart script is enabled) the server, default false
+### "tpsWatcherDelay": - if tps falls bellow threshold watcher will wait this much time in seconds before restarting server. If tps return to normal watcher will reset
+### "tpsThreshold": 12.0 -  if tps will fall bellow this value watcher will be triggered
+
+
+### "enableShutdownWatcher": if shutdown watcher should be enabled. Default false
+### "shutdownWatcherTime": 300 - if server shutdown procedure will takes this much time in seconds watcher will instantly kill JVM process
+
+
+### "restartWhenNoPlayersAreOnline": self explanatory
+### "inverseMode": - if false then server will restart if it was running for time specified in restartDelay field and there is no players online. if true then server will restart after time specified in restartDelay field will pass since last player leave from server. Default false
+### "restartDelay": 60 - delay in minutes
 
 
 ## License
