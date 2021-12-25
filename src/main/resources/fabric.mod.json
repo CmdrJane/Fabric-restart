@@ -12,7 +12,7 @@
     "sources": "https://github.com/FabricMC/fabric-example-mod"
   },
 
-  "license": "CC0-1.0",
+  "license": "GPL-v3",
   "icon": "assets/fabricrestart/icon.png",
 
   "environment": "*",
@@ -26,8 +26,9 @@
   ],
 
   "depends": {
-    "fabricloader": ">=0.7.4",
+    "fabricloader": ">=0.12.9",
     "fabric": "*",
-    "minecraft": ">=1.17"
+    "minecraft": "1.18.x",
+    "java": ">=17"
   }
 }
