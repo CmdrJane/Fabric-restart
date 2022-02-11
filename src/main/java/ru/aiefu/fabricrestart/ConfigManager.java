@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import net.minecraft.server.MinecraftServer;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -13,8 +14,9 @@ import java.util.*;
 public class ConfigManager {
 
     public void gen() throws IOException {
-        ObjectMapper om = new ObjectMapper(new YAMLFactory());
-        om.writeValue(new File("./config/fabric-restart.yml"), new Config());
+        FileOutputStream file = new FileOutputStream("./config/fabric-restart.yml");
+        FabricRestart.class.getResourceAsStream("/fabric-restart.yml").transferTo(file);
+        file.close();
     }
 
     public Config read() throws IOException {
@@ -44,6 +46,7 @@ public class ConfigManager {
         public final boolean restartNoPlayers = false;
         public final boolean afterLastPlayer = true;
         public final int delay = 300;
+        public final int gracePeriod = 3600;
 
 
 
@@ -100,13 +103,13 @@ public class ConfigManager {
                 for (Map.Entry<Long, String> e : messages.entrySet()){
                     msgs.put(restart - (e.getKey() * 1000), e.getValue());
                 }
-                FabricRestart.rdata = new RestartDataHolder(restart, restart - countdown * 1000L, msgs, msgt, this);
+                FabricRestart.rdata = new RestartDataHolder(restart, restart - (countdown + 1) * 1000L, msgs, msgt, this);
             }
             if(enableMemoryWatcher || enableTpsWatcher){
                 new ServerWatcher(server, this, FabricRestart.rdata);
             }
             if(restartNoPlayers){
-                FabricRestart.tracker = new PlayerCountTracker(afterLastPlayer, delay, System.currentTimeMillis());
+                FabricRestart.tracker = new PlayerCountTracker(afterLastPlayer, delay, gracePeriod, System.currentTimeMillis());
             }
         }
     }

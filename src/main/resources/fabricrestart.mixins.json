@@ -4,11 +4,11 @@
   "package": "ru.aiefu.fabricrestart.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ServerGamePacketListenerMixins"
   ],
   "server": [
     "MinecraftServerMixins",
-    "StopCommandMixins"
+    "StopCommandMixins",
+    "ServerGamePacketListenerMixins"
   ],
   "injectors": {
     "defaultRequire": 1
