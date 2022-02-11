@@ -41,6 +41,10 @@ public class ConfigManager {
         public final long memThreshold = 1024;
         public final boolean memKillInstantly = false;
         public final String memKillMsg = "Server will restart in 20 seconds due to high memory usage";
+        public final boolean restartNoPlayers = false;
+        public final boolean afterLastPlayer = true;
+        public final int delay = 300;
+
 
 
 
@@ -100,6 +104,9 @@ public class ConfigManager {
             }
             if(enableMemoryWatcher || enableTpsWatcher){
                 new ServerWatcher(server, this, FabricRestart.rdata);
+            }
+            if(restartNoPlayers){
+                FabricRestart.tracker = new PlayerCountTracker(afterLastPlayer, delay, System.currentTimeMillis());
             }
         }
     }

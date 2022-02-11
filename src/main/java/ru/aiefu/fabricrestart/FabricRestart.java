@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("fabricrestart");
 
 	public static RestartDataHolder rdata;
+	public static PlayerCountTracker tracker;
 	public static boolean disableShutdownHook = false;
 	public static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
 			.setNameFormat("FR-Executor-Thread-%d")
@@ -39,6 +41,14 @@ public class FabricRestart implements DedicatedServerModInitializer {
 			if(rdata != null){
 				if(rdata.isScriptEnabled())
 					registerShutdownHook();
+			}
+		});
+		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			if(rdata!= null){
+				rdata.update(server, System.currentTimeMillis());
+			}
+			if(tracker != null){
+				tracker.playersChecker(server);
 			}
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> executor.shutdown());

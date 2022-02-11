@@ -4,7 +4,6 @@ import net.minecraft.Util;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.TimeUtil;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -18,15 +17,6 @@ import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixins implements ITPS {
-	@Shadow public abstract int getTickCount();
-
-	@Inject(method = "runServer", at = @At(value = "INVOKE", target = "net/minecraft/server/MinecraftServer.tickServer (Ljava/util/function/BooleanSupplier;)V", shift = At.Shift.AFTER))
-	private void timeTracker(CallbackInfo ci){
-		if(this.getTickCount() % 20 == 0){
-			FabricRestart.rdata.update((MinecraftServer) (Object)this, System.currentTimeMillis());
-		}
-	}
-
 	//Tps measurement
 
 	private long timeRefMs = 0L;
