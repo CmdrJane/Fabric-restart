@@ -35,11 +35,13 @@ public class ModCommands {
     }
 
     private static int getTimeUntilRestart(CommandSourceStack source){
-        if(FabricRestart.rdata != null)
+        if(FabricRestart.rdata != null) {
             source.sendSuccess(new TextComponent("Restart time: " + LocalDateTime.
-                    ofEpochSecond(FabricRestart.rdata.getRestartTimeNoOffset() / 1000,0, OffsetDateTime.
+                    ofEpochSecond(FabricRestart.rdata.getRestartTime() / 1000, 0, OffsetDateTime.
                             now().getOffset()).format(DateTimeFormatter.ofPattern("HH:mm"))
             ), false);
+            System.out.println(FabricRestart.rdata.getRestartTime());
+        }
         else source.sendSuccess(new TextComponent("Auto-restart is disabled"), false);
         return 0;
     }

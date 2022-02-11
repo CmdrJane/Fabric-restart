@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -54,16 +55,17 @@ public class ConfigManager {
             messages.put(60L, "Server restart in 1 minute");
         }
 
+        @SuppressWarnings("all")
         public void setup(MinecraftServer server) throws Exception {
             ArrayList<Long> timeList = new ArrayList<>();
-            long offset = OffsetDateTime.now().getOffset().getTotalSeconds() * 1000L;
-            long ms = System.currentTimeMillis();
-            long zeroHour = ms - (ms % 86_400_000) + offset;
+            LocalDateTime time = LocalDateTime.now();
+            OffsetDateTime offset = OffsetDateTime.now();
+            long ms = time.toEpochSecond(offset.getOffset()) * 1000;
             for(String s : this.timestamps){
                 int index = s.indexOf(':');
-                int hour = Integer.parseInt(s.substring(0, index)) * 60 * 60 * 1000;
-                int minutes = Integer.parseInt(s.substring(index + 1)) * 60 * 1000;
-                timeList.add(zeroHour + hour + minutes);
+                int hour = Integer.parseInt(s.substring(0, index));
+                int minutes = Integer.parseInt(s.substring(index + 1));
+                timeList.add(time.withHour(hour).withMinute(minutes).toEpochSecond(offset.getOffset()) * 1000L);
             }
 
             Collections.sort(timeList);
@@ -76,7 +78,7 @@ public class ConfigManager {
             if(!disableRestart) {
                 long restart = 0;
                 for (long l : timeList) {
-                    if (ms + offset < l) {
+                    if (ms < l) {
                         restart = l;
                         break;
                     }
@@ -94,8 +96,11 @@ public class ConfigManager {
                 for (Map.Entry<Long, String> e : messages.entrySet()){
                     msgs.put(restart - (e.getKey() * 1000), e.getValue());
                 }
-                FabricRestart.rdata = new RestartDataHolder(restart, restart - countdown * 1000L, msgs, msgt, offset, this, server);
-            } else throw new Exception("Restart schedule cannot be empty");
+                FabricRestart.rdata = new RestartDataHolder(restart, restart - countdown * 1000L, msgs, msgt, this);
+            }
+            if(enableMemoryWatcher || enableTpsWatcher){
+                new ServerWatcher(server, this, FabricRestart.rdata);
+            }
         }
     }
 }

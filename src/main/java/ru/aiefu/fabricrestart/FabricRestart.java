@@ -1,5 +1,6 @@
 package ru.aiefu.fabricrestart;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class FabricRestart implements DedicatedServerModInitializer {
 	// This logger is used to write text to the console and the log file.
@@ -19,6 +22,10 @@ public class FabricRestart implements DedicatedServerModInitializer {
 
 	public static RestartDataHolder rdata;
 	public static boolean disableShutdownHook = false;
+	public static ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
+			.setNameFormat("FR-Executor-Thread-%d")
+			.setDaemon(true)
+			.build());
 
 	@Override
 	public void onInitializeServer() {
@@ -34,6 +41,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 					registerShutdownHook();
 			}
 		});
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> executor.shutdown());
 		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> ModCommands.register(dispatcher));
 	}
 

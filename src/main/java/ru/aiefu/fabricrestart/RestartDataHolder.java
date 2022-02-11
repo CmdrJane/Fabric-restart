@@ -13,7 +13,6 @@ public class RestartDataHolder {
     private long restart_time;
     private final long countdown;
     private MessagesHolder msgData;
-    private final long offset;
 
     private final String countdownMsg;
     private final boolean enableScript;
@@ -23,11 +22,10 @@ public class RestartDataHolder {
     public final boolean tpsWatcherEnabled;
     public final boolean memoryWatcherEnabled;
 
-    public RestartDataHolder(long restart_time, long countdown, HashMap<Long, String> msgs, List<Long> timestamps, long offset, ConfigManager.Config cfg, MinecraftServer server){
+    public RestartDataHolder(long restart_time, long countdown, HashMap<Long, String> msgs, List<Long> timestamps, ConfigManager.Config cfg){
         this.restart_time = restart_time;
         this.countdown = countdown;
         this.msgData = new MessagesHolder(timestamps, msgs);
-        this.offset = offset;
 
         this.countdownMsg = cfg.countdownMsg;
         this.enableScript = cfg.enableScript;
@@ -35,16 +33,12 @@ public class RestartDataHolder {
         this.tpsWatcherEnabled = cfg.enableTpsWatcher;
         this.memoryWatcherEnabled = cfg.enableMemoryWatcher;
         this.disconnectMessage = cfg.disconnectMessage;
-        if(tpsWatcherEnabled || memoryWatcherEnabled){
-            new ServerWatcher(server, cfg, this);
-        }
     }
 
     public void update(MinecraftServer server, long ms){
-        long time = ms + offset;
-        sendTimedMsg(server, time);
-        tryCountdown(server, time);
-        tryRestart(server, time);
+        sendTimedMsg(server, ms);
+        tryCountdown(server, ms);
+        tryRestart(server, ms);
     }
 
     public void shutdown(MinecraftServer server){
@@ -77,22 +71,18 @@ public class RestartDataHolder {
     }
 
     public void setRestartTime(long restart_time) {
-        this.restart_time = restart_time + offset;
+        this.restart_time = restart_time;
     }
 
     public long getRestartTime() {
         return restart_time;
     }
 
-    public long getRestartTimeNoOffset() {
-        return restart_time - offset;
-    }
-
     public void disableMessages(){
         this.msgData.disableMsgs = true;
     }
 
-    public class MessagesHolder {
+    public static class MessagesHolder {
         private final List<Long> timestamps;
         private long nextMsg;
         private int position;
@@ -118,7 +108,7 @@ public class RestartDataHolder {
             }
         }
         private void setup(){
-            long ms = System.currentTimeMillis() + RestartDataHolder.this.offset;
+            long ms = System.currentTimeMillis();
             for (int i = 0; i < timestamps.size(); i++) {
                 long time = timestamps.get(i);
                 if (ms < time) {

@@ -1,6 +1,5 @@
 package ru.aiefu.fabricrestart;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.network.chat.ChatType;
@@ -8,9 +7,6 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 
 import java.lang.management.ManagementFactory;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class ServerWatcher {
@@ -48,17 +44,12 @@ public class ServerWatcher {
         this.killInstantlyM = cfg.memKillInstantly;
         this.memKillMsg = cfg.memKillMsg;
 
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("Watcher-thread-%d")
-                .setDaemon(true)
-                .build();
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(threadFactory);
         if(enableTpsW && enableMemW){
-            executor.scheduleAtFixedRate(() -> watch(server), 0L, 1L, TimeUnit.SECONDS);
+            FabricRestart.executor.scheduleAtFixedRate(() -> watch(server), 0L, 1L, TimeUnit.SECONDS);
         } else if(enableTpsW){
-            executor.scheduleAtFixedRate(() -> watchTps(server), 0L, 1L, TimeUnit.SECONDS);
+            FabricRestart.executor.scheduleAtFixedRate(() -> watchTps(server), 0L, 1L, TimeUnit.SECONDS);
         } else if(enableMemW){
-            executor.scheduleAtFixedRate(() -> watchMemory(server), 0L, 1L, TimeUnit.SECONDS);
+            FabricRestart.executor.scheduleAtFixedRate(() -> watchMemory(server), 0L, 1L, TimeUnit.SECONDS);
         }
     }
     private void watch(MinecraftServer server){
@@ -74,9 +65,8 @@ public class ServerWatcher {
             if(!killInstantly) {
                 server.getPlayerList().getPlayers().forEach(playerEntity -> playerEntity
                         .sendMessage(new TextComponent(killMsg).withStyle(ChatFormatting.RED), ChatType.SYSTEM,Util.NIL_UUID));
-                rda.setRestartTime(System.currentTimeMillis() + 20000);
-                rda.disableMessages();
-            } else rda.setRestartTime(System.currentTimeMillis());
+                initiateShutdown(server, System.currentTimeMillis() + 20000, false);
+            } else initiateShutdown(server, 0, true);
             tpsWatcherTriggered = true;
         }
     }
@@ -87,10 +77,18 @@ public class ServerWatcher {
             if(!killInstantlyM) {
                 server.getPlayerList().getPlayers().forEach(playerEntity -> playerEntity
                         .sendMessage(new TextComponent(memKillMsg).withStyle(ChatFormatting.RED), ChatType.SYSTEM, Util.NIL_UUID));
-                rda.setRestartTime(System.currentTimeMillis() + 20000);
-                rda.disableMessages();
-            } else rda.setRestartTime(System.currentTimeMillis());
+                initiateShutdown(server, System.currentTimeMillis() + 20000, false);
+            } else initiateShutdown(server, 0, true);
             memWatcherTriggered = true;
         }
+    }
+
+    private void initiateShutdown(MinecraftServer server, long ms, boolean now){
+        if(!now) {
+            if (rda != null) {
+                rda.setRestartTime(ms);
+                rda.disableMessages();
+            } else FabricRestart.executor.schedule(() -> server.halt(false), 20L, TimeUnit.SECONDS);
+        } else server.halt(false);
     }
 }
