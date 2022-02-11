@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "ru.aiefu.fabricrestart.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+  ],
+  "server": [
+    "MinecraftServerMixins",
+    "StopCommandMixins"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
