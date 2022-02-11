@@ -24,11 +24,11 @@ public class ConfigManager {
         public final boolean enableScript = false;
         public final String pathToScript = "restart.bat";
 
-        private final List<String> timestamps = new ArrayList<>();
-        private final int countdown;
+        public final List<String> timestamps = new ArrayList<>();
+        public final int countdown;
         public final String countdownMsg = "Server restart in %s seconds";
         public final String disconnectMessage = "Server is restarting, we will be back in few minutes";
-        private final HashMap<Long, String> messages = new HashMap<>();
+        public final HashMap<Long, String> messages = new HashMap<>();
 
         public final boolean enableTpsWatcher = false;
         public final float tpsThreshold = 15.0F;
@@ -40,6 +40,8 @@ public class ConfigManager {
         public final long memThreshold = 1024;
         public final boolean memKillInstantly = false;
         public final String memKillMsg = "Server will restart in 20 seconds due to high memory usage";
+
+
 
         public Config(){
             this.countdown = 15;
@@ -93,7 +95,7 @@ public class ConfigManager {
                     msgs.put(restart - (e.getKey() * 1000), e.getValue());
                 }
                 FabricRestart.rdata = new RestartDataHolder(restart, restart - countdown * 1000L, msgs, msgt, offset, this, server);
-            }
+            } else throw new Exception("Restart schedule cannot be empty");
         }
     }
 }

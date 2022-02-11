@@ -1,6 +1,7 @@
 package ru.aiefu.fabricrestart;
 
 import net.fabricmc.api.DedicatedServerModInitializer;
+import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
@@ -21,28 +22,33 @@ public class FabricRestart implements DedicatedServerModInitializer {
 
 	@Override
 	public void onInitializeServer() {
-		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> {
 			try {
 				readConfiguration(server);
 			} catch (Exception e) {
 				e.printStackTrace();
+				System.exit(-1);
 			}
 			if(rdata != null){
 				if(rdata.isScriptEnabled())
 					registerShutdownHook();
 			}
 		});
+		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> ModCommands.register(dispatcher));
 	}
 
 	private void readConfiguration(MinecraftServer server) throws Exception {
 		ConfigManager m = new ConfigManager();
+		if(!Files.isDirectory(Paths.get("./config"))){
+			Files.createDirectory(Paths.get("./config"));
+		}
 		if(!Files.exists(Paths.get("./config/fabric-restart.yml"))){
 			m.gen();
 		}
 		m.read().setup(server);
 	}
 
-	private void registerShutdownHook(){
+	public static void registerShutdownHook(){
 		Thread hook = new Thread(() -> {
 			if(!disableShutdownHook){
 				String osName = System.getProperty("os.name").toLowerCase();

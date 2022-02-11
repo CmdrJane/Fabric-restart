@@ -74,9 +74,9 @@ public class ServerWatcher {
             if(!killInstantly) {
                 server.getPlayerList().getPlayers().forEach(playerEntity -> playerEntity
                         .sendMessage(new TextComponent(killMsg).withStyle(ChatFormatting.RED), ChatType.SYSTEM,Util.NIL_UUID));
-                rda.setRestart_time(System.currentTimeMillis() + 20000);
+                rda.setRestartTime(System.currentTimeMillis() + 20000);
                 rda.disableMessages();
-            } else rda.setRestart_time(System.currentTimeMillis());
+            } else rda.setRestartTime(System.currentTimeMillis());
             tpsWatcherTriggered = true;
         }
     }
@@ -87,9 +87,9 @@ public class ServerWatcher {
             if(!killInstantlyM) {
                 server.getPlayerList().getPlayers().forEach(playerEntity -> playerEntity
                         .sendMessage(new TextComponent(memKillMsg).withStyle(ChatFormatting.RED), ChatType.SYSTEM, Util.NIL_UUID));
-                rda.setRestart_time(System.currentTimeMillis() + 20000);
+                rda.setRestartTime(System.currentTimeMillis() + 20000);
                 rda.disableMessages();
-            } else rda.setRestart_time(System.currentTimeMillis());
+            } else rda.setRestartTime(System.currentTimeMillis());
             memWatcherTriggered = true;
         }
     }

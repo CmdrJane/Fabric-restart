@@ -76,8 +76,16 @@ public class RestartDataHolder {
         return pathToScript;
     }
 
-    public void setRestart_time(long restart_time) {
+    public void setRestartTime(long restart_time) {
         this.restart_time = restart_time + offset;
+    }
+
+    public long getRestartTime() {
+        return restart_time;
+    }
+
+    public long getRestartTimeNoOffset() {
+        return restart_time - offset;
     }
 
     public void disableMessages(){

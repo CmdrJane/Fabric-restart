@@ -2,6 +2,7 @@ package ru.aiefu.fabricrestart.mixin;
 
 import net.minecraft.Util;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.TimeUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,6 +32,7 @@ public abstract class MinecraftServerMixins implements ITPS {
 	private long timeRefMs = 0L;
 	private final List<Long> samples = new ArrayList<>();
 	private final List<Double> tpsSamples = new ArrayList<>();
+	private static final double NANO_PER_SECOND_DOUBLE = TimeUtil.NANOSECONDS_PER_SECOND;
 
 	private long nanoTimeStart;
 
@@ -50,8 +52,8 @@ public abstract class MinecraftServerMixins implements ITPS {
 	private void calculateTPSFR(long l, long n){
 		samples.add(n - l);
 		if(n >= timeRefMs || samples.size() > 19){
-			timeRefMs = n + 1_000_000_000;
-			tpsSamples.add(Math.min(20.0D / (samples.stream().mapToLong(Long::longValue).sum() / 1_000_000_000.0D), 20.0D));
+			timeRefMs = n + TimeUtil.NANOSECONDS_PER_SECOND;
+			tpsSamples.add(Math.min(20.0D / (samples.stream().mapToLong(Long::longValue).sum() / NANO_PER_SECOND_DOUBLE), 20.0D));
 			samples.clear();
 			if(tpsSamples.size() > 30){
 				tpsSamples.remove(0);
