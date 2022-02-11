@@ -5,6 +5,9 @@ import net.minecraft.Util;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,8 +45,10 @@ public class RestartDataHolder {
     }
 
     public void shutdown(MinecraftServer server){
-        server.getPlayerList().getPlayers().forEach(p -> p.connection.disconnect(new TextComponent(disconnectMessage)));
-        server.halt(false);
+        server.execute(() -> {
+            server.getPlayerList().getPlayers().forEach(p -> p.connection.disconnect(new TextComponent(disconnectMessage)));
+            server.halt(false);
+        });
     }
 
     private void tryRestart(MinecraftServer server, long currentMillis){
@@ -97,7 +102,10 @@ public class RestartDataHolder {
 
         private void nextMsg(MinecraftServer server, long currentMillis){
             if(!disableMsgs && currentMillis > nextMsg){
-                server.getPlayerList().broadcastMessage(new TextComponent(msgs.get(nextMsg)), ChatType.SYSTEM, Util.NIL_UUID);
+                server.getPlayerList().broadcastMessage(new TextComponent(msgs.get(nextMsg)).withStyle(ChatFormatting.GREEN), ChatType.SYSTEM, Util.NIL_UUID);
+                for(ServerPlayer p : server.getPlayerList().getPlayers()){
+                    p.playNotifySound(SoundEvents.NOTE_BLOCK_PLING, SoundSource.MASTER, 1.0F, 1.0F);
+                }
                 int j = position + 1;
                 if(j < msgs.size()){
                     nextMsg = timestamps.get(j);
