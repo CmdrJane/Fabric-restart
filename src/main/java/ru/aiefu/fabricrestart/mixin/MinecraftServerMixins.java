@@ -39,6 +39,16 @@ public abstract class MinecraftServerMixins implements ITPS {
 		}
 	}
 
+	@Inject(method = "runServer", at = @At(value = "INVOKE", target = "net/minecraft/server/MinecraftServer.tickServer (Ljava/util/function/BooleanSupplier;)V", shift = At.Shift.AFTER))
+	private void updateTrackers(CallbackInfo ci){
+		if(FabricRestart.rdata!= null){
+			FabricRestart.rdata.update((MinecraftServer) (Object)this, System.currentTimeMillis());
+		}
+		if(FabricRestart.tracker != null){
+			FabricRestart.tracker.playersChecker((MinecraftServer) (Object)this);
+		}
+	}
+
 	private void calculateTPSFR(long l, long n){
 		samples.add(n - l);
 		if(n >= timeRefMs || samples.size() > 19){

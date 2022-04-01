@@ -25,6 +25,8 @@ public class RestartDataHolder {
     public final boolean tpsWatcherEnabled;
     public final boolean memoryWatcherEnabled;
 
+    private boolean triggered;
+
     public RestartDataHolder(long restart_time, long countdown, HashMap<Long, String> msgs, List<Long> timestamps, ConfigManager.Config cfg){
         this.restart_time = restart_time;
         this.countdown = countdown;
@@ -45,10 +47,11 @@ public class RestartDataHolder {
     }
 
     public void shutdown(MinecraftServer server){
-        server.execute(() -> {
-            server.getPlayerList().getPlayers().forEach(p -> p.connection.disconnect(new TextComponent(disconnectMessage)));
+        if(!triggered) {
+            triggered = true;
+            //server.getPlayerList().getPlayers().forEach(p -> p.connection.disconnect(new TextComponent(disconnectMessage)));
             server.halt(false);
-        });
+        }
     }
 
     private void tryRestart(MinecraftServer server, long currentMillis){

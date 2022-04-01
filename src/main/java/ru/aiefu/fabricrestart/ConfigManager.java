@@ -24,29 +24,29 @@ public class ConfigManager {
     }
 
     public static class Config{
-        public final boolean enableScript = false;
-        public final String pathToScript = "restart.bat";
+        public boolean enableScript;
+        public String pathToScript;
 
-        public final List<String> timestamps = new ArrayList<>();
-        public final int countdown;
-        public final String countdownMsg = "Server restart in %s seconds";
-        public final String disconnectMessage = "Server is restarting, we will be back in few minutes";
-        public final HashMap<Long, String> messages = new HashMap<>();
+        public List<String> timestamps = new ArrayList<>();
+        public int countdown;
+        public String countdownMsg;
+        public String disconnectMessage;
+        public HashMap<Long, String> messages = new HashMap<>();
 
-        public final boolean enableTpsWatcher = false;
-        public final float tpsThreshold = 15.0F;
-        public final int tpsDelay = 60;
-        public final boolean tpsKillInstantly = false;
-        public final String tpsKillMsg = "Server will restart in 20 seconds due to consistently low tps";
+        public boolean enableTpsWatcher;
+        public float tpsThreshold;
+        public int tpsDelay;
+        public boolean tpsKillInstantly;
+        public String tpsKillMsg;
 
-        public final boolean enableMemoryWatcher = false;
-        public final long memThreshold = 1024;
-        public final boolean memKillInstantly = false;
-        public final String memKillMsg = "Server will restart in 20 seconds due to high memory usage";
-        public final boolean restartNoPlayers = false;
-        public final boolean afterLastPlayer = true;
-        public final int delay = 300;
-        public final int gracePeriod = 3600;
+        public boolean enableMemoryWatcher;
+        public long memThreshold;
+        public boolean memKillInstantly;
+        public String memKillMsg;
+        public boolean restartNoPlayers;
+        public boolean afterLastPlayer;
+        public int delay;
+        public int gracePeriod;
 
 
 
@@ -60,6 +60,24 @@ public class ConfigManager {
             messages.put(900L, "Server restart in 15 minutes");
             messages.put(300L, "Server restart in 5 minutes");
             messages.put(60L, "Server restart in 1 minute");
+
+            this.pathToScript = "restart.bat";
+            this.countdownMsg = "Server restart in %s seconds";
+            this.disconnectMessage = "Server is restarting, we will be back in few minutes";
+            this.tpsKillMsg = "Server will restart in 20 seconds due to consistently low tps";
+            this.memKillMsg = "Server will restart in 20 seconds due to high memory usage";
+            this.tpsThreshold  = 15.0F;
+            this.tpsDelay = 60;
+            this.memThreshold = 1024;
+            this.enableScript = false;
+            this.enableTpsWatcher = false;
+            this.tpsKillInstantly = false;
+            this.enableMemoryWatcher = false;
+            this.memKillInstantly  = false;
+            this.restartNoPlayers = false;
+            this.afterLastPlayer = true;
+            this.delay = 300;
+            this.gracePeriod = 3600;
         }
 
         @SuppressWarnings("all")

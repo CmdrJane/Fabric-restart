@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,14 +42,6 @@ public class FabricRestart implements DedicatedServerModInitializer {
 					registerShutdownHook();
 			}
 		});
-		ServerTickEvents.END_SERVER_TICK.register(server -> {
-			if(rdata!= null){
-				rdata.update(server, System.currentTimeMillis());
-			}
-			if(tracker != null){
-				tracker.playersChecker(server);
-			}
-		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> executor.shutdown());
 		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> ModCommands.register(dispatcher));
 	}
@@ -72,7 +63,7 @@ public class FabricRestart implements DedicatedServerModInitializer {
 				String osName = System.getProperty("os.name").toLowerCase();
 				try {
 					if(osName.startsWith("windows")) {
-						new ProcessBuilder("cmd.exe", "/c", "call " + rdata.getPathToScript()).start();
+						new ProcessBuilder("cmd.exe", "/c", "start " + rdata.getPathToScript()).start();
 					} else new ProcessBuilder(rdata.getPathToScript()).start();
 				} catch (IOException e){
 					System.out.println("Unable to execute restart script!");
