@@ -11,6 +11,11 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
+	maven {
+		url 'https://repo.maven.apache.org/maven2'
+		name 'Maven Central'
+	}
+
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
@@ -30,7 +35,7 @@ dependencies {
 	include(implementation ("com.fasterxml.jackson.core:jackson-core:2.13.1"))
 	include(implementation ("com.fasterxml.jackson.core:jackson-annotations:2.13.1"))
 	include(implementation ("com.fasterxml.jackson.core:jackson-databind:2.13.1"))
-	include "org.yaml:snakeyaml:1.28"
+	include 'org.yaml:snakeyaml:1.30'
 }
 
 processResources {

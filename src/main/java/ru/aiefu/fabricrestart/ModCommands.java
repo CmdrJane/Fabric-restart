@@ -18,7 +18,7 @@ import java.util.Locale;
 
 public class ModCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher){
-        dispatcher.register(Commands.literal("restart").executes(context -> restart(context.getSource())));
+        dispatcher.register(Commands.literal("restart").requires(stack -> stack.hasPermission(4)).executes(context -> restart(context.getSource())));
 
         dispatcher.register(Commands.literal("restart-when").executes(context -> getTimeUntilRestart(context.getSource())));
         dispatcher.register(Commands.literal("memory-stat").requires(source -> source.hasPermission(4))
